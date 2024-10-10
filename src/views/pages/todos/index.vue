@@ -6,7 +6,7 @@
       <!-- Input Section -->
       <label class="input input-bordered flex-grow flex items-center gap-2">
         <input
-          @keypress.enter="createTodo"
+          @keypress.enter="_storeTodo"
           v-model="newTodo"
           type="text"
           class="grow"
@@ -15,7 +15,7 @@
 
       <!-- Button Section -->
       <button 
-        @click="createTodo" 
+        @click="_storeTodo" 
         :disabled="!newTodo" 
         class="btn flex-shrink-0">
         Add
@@ -24,7 +24,7 @@
 
     <!-- Legends -->
     <div class="flex gap-1 mb-4">
-      <div v-for="(status, sx) in todoStatuses" :key="sx">
+      <div v-for="(status, sx) in getTodoStatuses" :key="sx">
         <button class="btn">
           {{ status.name }}
           <div class="text-white badge badge-sm p-2" :class="statusClass('bg', status.id)">
@@ -36,7 +36,7 @@
 
     <div>
       <div
-        v-for="todo in todos"
+        v-for="todo in getTodos"
         :key="todo.id">
         <div
           class="card bg-base-100 shadow-xl mb-4 border border-t-4"
@@ -53,7 +53,7 @@
           </button>
           <button
             v-else
-            @click="updateTodo"
+            @click="_updateTodo"
             class="absolute top-2 right-2 text-gray-400 btn btn-circle btn-xs btn-link">
             <!-- Pencil Icon (Heroicons example) -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -74,7 +74,7 @@
               v-model="currentTodo.todo_status_id"
               id="status"
               class="select select-bordered w-full">
-              <option v-for="status in todoStatuses" :key="status.id" :value="status.id">
+              <option v-for="status in getTodoStatuses" :key="status.id" :value="status.id">
                 {{ status.name }}
               </option>
             </select>
@@ -157,37 +157,28 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import axios from '@/axios'
 
-const todos = ref([])
 const todoStatuses = ref([])
 const newTodo = ref('')
 const isEditing = ref(false)
 const currentTodo = ref()
-const loggedUser = ref(JSON.parse(localStorage.getItem('loggedUser')))
 const preventiveModal = ref(false)
 
-// Fetch todos when the component is mounted
-const fetchTodos = async () => {
-  try {
-    const response = await axios.get('/api/todos')
-    todos.value = response.data
-  } catch (error) {
-    console.error('Error fetching todos:', error)
-  }
-}
-
-const fetchTodoStatuses = async () => {
-  try {
-    const response = await axios.get('/api/todostatuses')
-    todoStatuses.value = response.data
-  } catch (error) {
-    console.error('Error fetching todo statuses:', error)
-  }
-}
+// stores
+import { useTodoStore } from '@/stores/todos'
+const todoStore = useTodoStore()
+const { getTodos, getTodoStatuses } = storeToRefs(todoStore)
+const {
+  fetchTodos,
+  fetchTodoStatuses,
+  storeTodo,
+  updateTodo
+} = todoStore
 
 const todoStatusCount = (status_id) => {
-  const count = todos.value.filter(t => t.todo_status_id === status_id).length
+  const count = getTodos.value.filter(t => t.todo_status_id === status_id).length
   return count
 }
 
@@ -205,21 +196,12 @@ const statusClass = (prefix, statusId) => {
 }
 
 // Create a new todo
-const createTodo = async () => {
+const _storeTodo = async () => {
   if (!newTodo.value) return
 
-  try {
-    const response = await axios.post('/api/todos', {
-      todo: newTodo.value,
-      description: '', // Set a default or allow the user to add
-      user_id: loggedUser.value.id, // Assuming you have a user store
-      todo_status_id: 1, // Default status or allow selection
-    })
-    todos.value.push(response.data)
-    newTodo.value = ''
-  } catch (error) {
-    console.error('Error creating todo:', error)
-  }
+  // store new todos
+  const response = await storeTodo(newTodo.value)
+  if (response) newTodo.value = '' // reset
 }
 
 // Set up editing mode
@@ -232,30 +214,11 @@ const editTodo = async (todo) => {
 }
 
 // Update the current todo
-const updateTodo = async () => {
-  try {
-    const response = await axios.put(`/api/todos/${currentTodo.value.id}`, {
-      todo: currentTodo.value.todo,
-      description: currentTodo.value.description,
-      todo_status_id: currentTodo.value.todo_status_id,
-    })
-
-    const updatedTodo = response.data
-
-    const index = todos.value.findIndex(t => t.id === currentTodo.value.id)
-    if (index !== -1) {
-      todos.value[index] = { ...updatedTodo } // Update the existing todo
-    }
+const _updateTodo = async () => {
+  const response = await updateTodo(currentTodo.value)
+  if (response) {
     isEditing.value = false
-    currentTodo.value = {} // Reset currentTodo
-  } catch (error) {
-    console.error('Error updating todo:', error)
-  } finally {
-    // close all opened edits
-    todos.value.map(t => t.edit = false)
-
-    // resets
-    currentTodo.value = null
+    currentTodo.value = null // Reset currentTodo
   }
 }
 

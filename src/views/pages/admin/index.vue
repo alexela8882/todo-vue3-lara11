@@ -37,7 +37,7 @@
         </header>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="(group, status) in allTodos" :key="status" class="bg-white shadow rounded-lg p-4">
+          <div v-for="(group, status) in getAllTodos" :key="status" class="bg-white shadow rounded-lg p-4">
             <h3 class="text-lg font-semibold text-gray-700">{{ status }}</h3>
             <p class="text-2xl font-bold text-blue-600">{{ group.count }}</p> <!-- Example value -->
           </div>
@@ -53,31 +53,18 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from '@/axios'
+import { storeToRefs } from 'pinia'
+
+// stores
+import { useTodoStore } from '@/stores/todos'
+const todoStore = useTodoStore()
+const { getAllTodos } = storeToRefs(todoStore)
+const { fetchAllTodos } = todoStore
 
 const route = useRoute()
-const allTodos = ref({})
 
 const isActive = (routeName) => {
   return route.name === routeName
-}
-
-const fetchUsers = async () => {
-  try {
-    const response = await axios.get('/api/todos-all')
-    allTodos.value = response.data
-  } catch (error) {
-    console.error('Error fetching all todos:', error)
-  }
-}
-
-const fetchAllTodos = async () => {
-  try {
-    const response = await axios.get('/api/todos-all')
-    allTodos.value = response.data
-  } catch (error) {
-    console.error('Error fetching all todos:', error)
-  }
 }
 
 onMounted(async () => {
