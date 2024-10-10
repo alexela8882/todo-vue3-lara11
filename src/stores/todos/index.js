@@ -78,6 +78,17 @@ export const useTodoStore = defineStore('todo', () => {
     }
   }
 
+  const deleteTodo = async (id) => {
+    try {
+      await axios.delete(`/api/todos/${id}`)
+      todos.value = todos.value.filter(todo => todo.id !== id)
+
+      return todos.value
+    } catch (error) {
+      console.error('Error deleting todo:', error)
+    }
+  }
+
   const fetchAllTodos = async () => {
     try {
       const response = await axios.get('/api/todos-all')
@@ -95,6 +106,7 @@ export const useTodoStore = defineStore('todo', () => {
     fetchAllTodos,
     fetchTodoStatuses,
     storeTodo,
-    updateTodo
+    updateTodo,
+    deleteTodo
   }
 })
