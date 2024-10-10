@@ -6,6 +6,7 @@
       <table class="table">
         <thead>
           <tr>
+            <th>Username</th>
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
@@ -13,7 +14,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="detail in userDetails" :key="detail.id">
+          <tr v-for="detail in getUserDetails" :key="detail.id">
+            <td>{{ detail.user.name }}</td>
             <td>{{ detail.first_name }}</td>
             <td>{{ detail.last_name }}</td>
             <td>{{ detail.email }}</td>
@@ -21,9 +23,6 @@
               <div class="flex gap-2">
                 <button @click="editUserDetail(detail)" class="text-white btn btn-primary btn-xs">
                   Edit
-                </button>
-                <button @click="deleteUserDetail(detail.id)" class="text-white btn btn-error btn-xs">
-                  Delete
                 </button>
               </div>
             </td>
@@ -71,7 +70,7 @@
 
         <!-- Modal Actions -->
         <div class="modal-action">
-          <button @click="updateUserDetail" class="btn btn-success">Update User Detail</button>
+          <button @click="_updateUserDetail" class="btn btn-success">Update User Detail</button>
           <label for="edit_user_detail_modal" class="btn">Cancel</label>
         </div>
       </div>
@@ -79,86 +78,55 @@
   </div>
 </template>
 
-<script>
-import axios from '@/axios'
+<script setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import axios from '@/axios'
 
-export default {
-  setup() {
-    const userDetails = ref([])
-    const newUserDetail = ref({ first_name: '', last_name: '', email: '', user_id: null })
-    const currentUserDetail = ref(null)
-    const isEditing = ref(false)
-    const errorMessage = ref('')
-    const updateErrorMessage = ref('')
+// stores
+import { useUserDetailStore } from '@/stores/users/details'
+const userDetailStore = useUserDetailStore()
+const { getUserDetails } = storeToRefs(userDetailStore)
+const {
+  fetchUserDetails,
+  updateUserDetail
+} = userDetailStore
 
-    const fetchUserDetails = async () => {
-      try {
-        const response = await axios.get('/api/user-details') // Fetch user details
-        userDetails.value = response.data
-      } catch (error) {
-        console.error('Error fetching user details:', error)
-      }
-    }
+const userDetails = ref([])
+const currentUserDetail = ref(null)
+const isEditing = ref(false)
+const updateErrorMessage = ref('')
 
-    const createUserDetail = async () => {
-      try {
-        await axios.post('/api/user-details', newUserDetail.value)
-        await fetchUserDetails() // Refresh the user details list
-        newUserDetail.value = { first_name: '', last_name: '', email: '', user_id: null } // Reset the form
-        errorMessage.value = ''
-      } catch (error) {
-        console.error('Error creating user detail:', error)
-        errorMessage.value = error.response.data.message
-      }
-    }
-
-    const editUserDetail = (detail) => {
-      currentUserDetail.value = { ...detail }
-      isEditing.value = true
-    }
-
-    const updateUserDetail = async () => {
-      try {
-        await axios.put(`/api/user-details/${currentUserDetail.value.id}`, currentUserDetail.value)
-        await fetchUserDetails() // Refresh the user details list
-        isEditing.value = false
-        updateErrorMessage.value = ''
-      } catch (error) {
-        console.error('Error updating user detail:', error)
-        updateErrorMessage.value = error.response.data.message
-      }
-    }
-
-    const deleteUserDetail = async (id) => {
-      if (confirm('Are you sure you want to delete this user detail?')) {
-        try {
-          await axios.delete(`/api/user-details/${id}`)
-          await fetchUserDetails() // Refresh the user details list
-        } catch (error) {
-          console.error('Error deleting user detail:', error)
-        }
-      }
-    }
-
-    onMounted(async () => {
-      await fetchUserDetails()
-    })
-
-    return {
-      userDetails,
-      newUserDetail,
-      currentUserDetail,
-      isEditing,
-      errorMessage,
-      updateErrorMessage,
-      createUserDetail,
-      editUserDetail,
-      updateUserDetail,
-      deleteUserDetail,
-    }
-  },
+const editUserDetail = (detail) => {
+  currentUserDetail.value = { ...detail }
+  isEditing.value = true
 }
+
+const _updateUserDetail = async () => {
+  const { succResponse, errResponse } = await updateUserDetail(currentUserDetail.value)
+
+  if (succResponse) {
+    isEditing.value = false
+    updateErrorMessage.value = ''
+  }
+
+  if (errResponse) updateErrorMessage.value = errResponse
+}
+
+const deleteUserDetail = async (id) => {
+  if (confirm('Are you sure you want to delete this user detail?')) {
+    try {
+      await axios.delete(`/api/user-details/${id}`)
+      await fetchUserDetails() // Refresh the user details list
+    } catch (error) {
+      console.error('Error deleting user detail:', error)
+    }
+  }
+}
+
+onMounted(async () => {
+  await fetchUserDetails()
+})
 </script>
 
 <style scoped>
