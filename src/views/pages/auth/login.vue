@@ -1,34 +1,41 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold text-center">Login</h2>
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md p-8 space-y-6 bg-base-100 rounded-lg shadow-xl">
+      <h2 class="text-3xl font-bold text-center text-primary">Login</h2>
       <form @submit.prevent="login">
         <div class="space-y-4">
-          <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">Username:</label>
+          <div class="form-control">
+            <label for="username" class="label">
+              <span class="label-text">Username:</span>
+            </label>
             <input
               type="text"
               v-model="username"
               required
-              class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300"
+              class="input input-bordered w-full"
+              :disabled="loginLoading"
             />
           </div>
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Password:</label>
+          <div class="form-control">
+            <label for="password" class="label">
+              <span class="label-text">Password:</span>
+            </label>
             <input
               type="password"
               v-model="password"
               required
-              class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-300"
+              class="input input-bordered w-full"
+              :disabled="loginLoading"
             />
           </div>
           <button
             type="submit"
-            class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:ring focus:ring-blue-300"
-          >
-            Login
+            class="btn btn-primary w-full"
+            :class="loginLoading && 'btn-disabled'">
+            <span v-if="loginLoading" class="loading loading-spinner"></span>
+            {{ loginLoading ? 'Logging in...' : 'Login' }}
           </button>
-          <p v-if="errorMessage" class="mt-2 text-sm text-red-600">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="text-error text-sm mt-2">{{ errorMessage }}</p>
         </div>
       </form>
     </div>
@@ -44,8 +51,10 @@ const router = useRouter()
 const username = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const loginLoading = ref(false)
 
 const login = async () => {
+  loginLoading.value = true
   errorMessage.value = ''
   try {
     const response = await axios.post('/api/login', {
@@ -61,6 +70,8 @@ const login = async () => {
     window.location = '/'
   } catch (error) {
     errorMessage.value = error.response?.data.message || 'Login failed'
+  } finally {
+    loginLoading.value = false
   }
 }
 </script>
