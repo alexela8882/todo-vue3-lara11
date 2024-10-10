@@ -1,70 +1,79 @@
 <template>
-  <div class="container mx-auto p-4">
+  <div class="container mx-auto">
     <h1 class="text-2xl font-bold mb-4">User Details</h1>
 
-    <table class="min-w-full bg-white border border-gray-300">
-      <thead>
-        <tr>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">First Name</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Last Name</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Email</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="detail in userDetails" :key="detail.id">
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ detail.first_name }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ detail.last_name }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ detail.email }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">
-            <button @click="editUserDetail(detail)" class="bg-yellow-500 text-white rounded text-xs px-2 py-1 mr-1">
-              Edit
-            </button>
-            <button @click="deleteUserDetail(detail.id)" class="bg-red-500 text-white rounded text-xs px-2 py-1">
-              Delete
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="detail in userDetails" :key="detail.id">
+            <td>{{ detail.first_name }}</td>
+            <td>{{ detail.last_name }}</td>
+            <td>{{ detail.email }}</td>
+            <td>
+              <div class="flex gap-2">
+                <button @click="editUserDetail(detail)" class="text-white btn btn-primary btn-xs">
+                  Edit
+                </button>
+                <button @click="deleteUserDetail(detail.id)" class="text-white btn btn-error btn-xs">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <div v-if="isEditing" class="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50">
-      <div class="bg-white p-4 rounded shadow-md w-2/5">
-        <h2 class="text-xl font-bold mb-2">Edit User Detail</h2>
+    <!-- Modal Checkbox Control -->
+    <input type="checkbox" id="edit_user_detail_modal" class="modal-toggle" v-model="isEditing" />
+
+    <!-- Modal Structure -->
+    <div v-if="currentUserDetail" class="modal">
+      <div class="modal-box">
+        <h2 class="text-xl font-bold mb-4">Edit User Detail</h2>
+
+        <!-- First Name Input -->
         <input
           v-model="currentUserDetail.first_name"
           type="text"
           placeholder="First Name"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
+        
+        <!-- Last Name Input -->
         <input
           v-model="currentUserDetail.last_name"
           type="text"
           placeholder="Last Name"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
+
+        <!-- Email Input -->
         <input
           v-model="currentUserDetail.email"
           type="email"
           placeholder="Email"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
-        <select
-          v-model="currentUserDetail.user_id"
-          class="border rounded p-2 w-full mb-2"
-        >
-          <option disabled value="">Select User</option>
-          <option v-for="user in users" :key="user.id" :value="user.id">
-            {{ user.name }}
-          </option>
-        </select>
-        <button @click="updateUserDetail" class="bg-green-500 text-white rounded p-2">
-          Update User Detail
-        </button>
-        <button @click="isEditing = false" class="bg-gray-400 text-white rounded p-2 ml-2">
-          Cancel
-        </button>
-        <div v-if="updateErrorMessage" class="text-red-500 mt-2">{{ updateErrorMessage }}</div>
+
+        <!-- Error Message Display -->
+        <div v-if="updateErrorMessage" class="text-red-600 mb-4">
+          {{ updateErrorMessage }}
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-action">
+          <button @click="updateUserDetail" class="btn btn-success">Update User Detail</button>
+          <label for="edit_user_detail_modal" class="btn">Cancel</label>
+        </div>
       </div>
     </div>
   </div>
@@ -77,7 +86,6 @@ import { ref, onMounted } from 'vue'
 export default {
   setup() {
     const userDetails = ref([])
-    const users = ref([]) // To store all users
     const newUserDetail = ref({ first_name: '', last_name: '', email: '', user_id: null })
     const currentUserDetail = ref(null)
     const isEditing = ref(false)
@@ -90,15 +98,6 @@ export default {
         userDetails.value = response.data
       } catch (error) {
         console.error('Error fetching user details:', error)
-      }
-    }
-
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get('/api/users') // Fetch users for dropdown
-        users.value = response.data
-      } catch (error) {
-        console.error('Error fetching users:', error)
       }
     }
 
@@ -142,14 +141,12 @@ export default {
       }
     }
 
-    onMounted(() => {
-      fetchUserDetails()
-      fetchUsers()
+    onMounted(async () => {
+      await fetchUserDetails()
     })
 
     return {
       userDetails,
-      users,
       newUserDetail,
       currentUserDetail,
       isEditing,

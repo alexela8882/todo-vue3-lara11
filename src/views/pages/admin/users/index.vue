@@ -1,115 +1,136 @@
 <template>
   <div>
     <h1 class="text-2xl font-bold mb-4">Manage Users</h1>
-    <div class="mb-4 flex">
-      <input
-        @keypress.enter="createUser"
-        v-model="newUser.name"
-        type="text"
-        placeholder="Name"
-        class="border rounded p-2 flex-grow mr-2 text-sm"
-      />
-      <input
-        @keypress.enter="createUser"
-        v-model="newUser.username"
-        type="username"
-        placeholder="Username"
-        class="border rounded p-2 flex-grow mr-2 text-sm"
-      />
+    <div class="join mb-4">
+      <div>
+        <div>
+          <input
+            @keypress.enter="createUser"
+            v-model="newUser.name"
+            type="text"
+            placeholder="Name"
+            class="input input-bordered join-item"
+          />
+        </div>
+      </div>
+      <div>
+        <div>
+          <input
+            @keypress.enter="createUser"
+            v-model="newUser.username"
+            type="username"
+            placeholder="Username"
+            class="input input-bordered join-item"
+          />
+        </div>
+      </div>
       <select
         v-model="newUser.user_type_id"
-        class="border rounded p-2 flex-grow mr-2">
+        class="select select-bordered join-item">
         <option disabled :value="0">Select Type:</option>
         <option v-for="type in userTypes" :key="type.id" :value="type.id">
           {{ type.name }}
         </option>
       </select>
-      <button
-        @click="createUser"
-        class="bg-blue-500 text-white rounded p-2"
-        :class="(!newUser.name || !newUser.username) && 'bg-blue-400'"
-        :disabled="!newUser.name || !newUser.username || createBtnLoading"
-        :loading="true">
-        <span v-if="createBtnLoading">Adding...</span>
-        <span v-else>Add User</span>
-      </button>
+      <div class="indicator">
+        <button
+          @click="createUser"
+          class="btn join-item"
+          :class="(!newUser.name || !newUser.username) && 'bg-blue-400'"
+          :disabled="!newUser.name || !newUser.username || createBtnLoading">
+          <span v-if="createBtnLoading" class="loading loading-spinner"></span>
+          {{ createBtnLoading ? 'Adding...' : 'Add User' }}
+        </button>
+      </div>
     </div>
 
     <!-- Error message display -->
     <div v-if="errorMessage" class="mb-4 text-red-600">
       {{ errorMessage }}
     </div>
-    
-    <table class="min-w-full bg-white border border-gray-300">
-      <thead>
+
+    <div class="overflow-x-auto">
+      <table class="table">
+        <!-- head -->
+        <thead>
         <tr>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Name</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Username</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">User Type</th>
-          <th class="border border-gray-300 px-2 py-1 text-left text-sm">Actions</th>
+          <th>Name</th>
+          <th>Username</th>
+          <th>User Type</th>
+          <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user.id">
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ user.name }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ user.username }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">{{ user.type.name }}</td>
-          <td class="border border-gray-300 px-2 py-1 text-sm">
-            <button @click="editUser(user)" class="bg-yellow-500 text-white rounded text-xs px-2 py-1 mr-1">
-              Edit
-            </button>
-            <button @click="deleteUser(user.id)" class="bg-red-500 text-white rounded text-xs px-2 py-1">
-              Delete
-            </button>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+          <td>{{ user.name }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.type.name }}</td>
+          <td>
+            <div class="flex gap-2">
+              <button @click="editUser(user)" class="text-white btn btn-primary btn-xs">
+                Edit
+              </button>
+              <button @click="deleteUser(user.id)" class="text-white btn btn-error btn-xs">
+                Delete
+              </button>
+            </div>
           </td>
         </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
 
-    <div v-if="isEditing" class="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50">
-      <div class="bg-white p-4 rounded shadow-md w-2/5">
-        <h2 class="text-xl font-bold mb-2">Edit User</h2>
+    <!-- Modal Checkbox Control -->
+    <input type="checkbox" id="edit_user_modal" class="modal-toggle" v-model="isEditing" />
+
+    <!-- Modal Structure -->
+    <div class="modal">
+      <div class="modal-box">
+        <h2 class="text-xl font-bold mb-4">Edit User</h2>
+        
+        <!-- User Inputs -->
         <input
           v-model="currentUser.name"
           type="text"
           placeholder="User Name"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
         <input
           v-model="currentUser.username"
-          type="username"
+          type="text"
           placeholder="Username"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
         <input
           v-model="currentUser.password"
           type="password"
           placeholder="Password"
-          class="border rounded p-2 w-full mb-2"
+          class="input input-bordered w-full mb-4"
         />
+        
+        <!-- User Type Dropdown -->
         <select
           v-model="currentUser.user_type_id"
           id="user-type"
-          class="border rounded p-2 w-full mb-2">
+          class="select select-bordered w-full mb-4">
           <option v-for="type in userTypes" :key="type.id" :value="type.id">
             {{ type.name }}
           </option>
         </select>
-
-        <!-- Error message display -->
-        <div v-if="updateErrorMessage" class="mb-4 text-red-600">
+        
+        <!-- Error Message -->
+        <div v-if="updateErrorMessage" class="text-red-600 mb-4">
           {{ updateErrorMessage }}
         </div>
-
-        <!-- Action Buttons -->
-        <button @click="updateUser" class="bg-green-500 text-white rounded p-2">
-          Update User
-        </button>
-        <button @click="isEditing = false" class="bg-gray-400 text-white rounded p-2 ml-2">
-          Cancel
-        </button>
+        
+        <!-- Modal Actions -->
+        <div class="modal-action">
+          <button @click="updateUser" class="btn btn-success">Update User</button>
+          <label for="edit_user_modal" class="btn">Cancel</label>
+        </div>
       </div>
     </div>
+
   </div>
 </template>
 

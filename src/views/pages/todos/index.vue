@@ -2,18 +2,6 @@
   <div class="container mx-auto w-5/12 p-4">
     <h1 class="text-2xl font-bold mb-4">Todos</h1>
 
-    <!-- Legends -->
-    <div class="flex gap-1 mb-4">
-      <div v-for="(status, sx) in todoStatuses" :key="sx">
-        <button class="btn">
-          {{ status.name }}
-          <div class="text-white badge badge-sm p-2" :class="statusClass('bg', status.id)">
-            {{ todoStatusCount(status.id) }}
-          </div>
-        </button>
-      </div>
-    </div>
-
     <div class="mb-4 flex w-full gap-2">
       <!-- Input Section -->
       <label class="input input-bordered flex-grow flex items-center gap-2">
@@ -32,6 +20,18 @@
         class="btn flex-shrink-0">
         Add
       </button>
+    </div>
+
+    <!-- Legends -->
+    <div class="flex gap-1 mb-4">
+      <div v-for="(status, sx) in todoStatuses" :key="sx">
+        <button class="btn">
+          {{ status.name }}
+          <div class="text-white badge badge-sm p-2" :class="statusClass('bg', status.id)">
+            {{ todoStatusCount(status.id) }}
+          </div>
+        </button>
+      </div>
     </div>
 
     <div>
