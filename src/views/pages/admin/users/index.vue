@@ -5,7 +5,7 @@
       <div>
         <div>
           <input
-            @keypress.enter="createUser"
+            @keypress.enter="_storeUser"
             v-model="newUser.name"
             type="text"
             placeholder="Name"
@@ -16,7 +16,7 @@
       <div>
         <div>
           <input
-            @keypress.enter="createUser"
+            @keypress.enter="_storeUser"
             v-model="newUser.username"
             type="username"
             placeholder="Username"
@@ -28,13 +28,13 @@
         v-model="newUser.user_type_id"
         class="select select-bordered join-item">
         <option disabled :value="0">Select Type:</option>
-        <option v-for="type in userTypes" :key="type.id" :value="type.id">
+        <option v-for="type in getUserTypes" :key="type.id" :value="type.id">
           {{ type.name }}
         </option>
       </select>
       <div class="indicator">
         <button
-          @click="createUser"
+          @click="_storeUser"
           class="btn join-item"
           :class="(!newUser.name || !newUser.username) && 'bg-blue-400'"
           :disabled="!newUser.name || !newUser.username || createBtnLoading">
@@ -61,7 +61,7 @@
         </tr>
       </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id">
+          <tr v-for="user in getUsers" :key="user.id">
           <td>{{ user.name }}</td>
           <td>{{ user.username }}</td>
           <td>{{ user.type.name }}</td>
@@ -113,7 +113,7 @@
           v-model="currentUser.user_type_id"
           id="user-type"
           class="select select-bordered w-full mb-4">
-          <option v-for="type in userTypes" :key="type.id" :value="type.id">
+          <option v-for="type in getUserTypes" :key="type.id" :value="type.id">
             {{ type.name }}
           </option>
         </select>
@@ -125,7 +125,7 @@
         
         <!-- Modal Actions -->
         <div class="modal-action">
-          <button @click="updateUser" class="btn btn-success">Update User</button>
+          <button @click="_updateUser" class="btn btn-success">Update User</button>
           <label for="edit_user_modal" class="btn">Cancel</label>
         </div>
       </div>
@@ -134,112 +134,73 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import axios from '@/axios'
 
-export default {
-  name: 'AdminUsers',
-  data() {
-    return {
-      // loading states
-      createBtnLoading: false,
-      users: [],
-      userTypes: [],
-      newUser: {
-        name: '',
-        username: '',
-        user_type_id: 2, // default: user
-      },
-      isEditing: false,
-      currentUser: {},
-      errorMessage: '',
-      updateErrorMessage: ''
-    }
-  },
-  created() {
-    this.fetchUsers()
-    this.fetchUserTypes()
-  },
-  methods: {
-    async fetchUsers() {
-      try {
-        const response = await axios.get('/api/users')
-        this.users = response.data
-      } catch (error) {
-        console.error('Error fetching users:', error)
-      }
-    },
-    async fetchUserTypes () {
-      try {
-        const response = await axios.get('/api/user-types');
-        this.userTypes = response.data;
-      } catch (error) {
-        console.error('Error fetching user types:', error);
-      }
-    },
-    async createUser() {
-      this.createBtnLoading = true
+// stores
+import { useUserStore } from '@/stores/users'
+const userStore = useUserStore()
+const { getUsers, getUserTypes } = storeToRefs(userStore)
+const {
+  fetchUsers,
+  fetchUserTypes,
+  storeUser,
+  updateUser,
+  deleteUser
+} = userStore
 
-      try {
-        const response = await axios.post('/api/users', this.newUser)
-        this.users.push(response.data)
-        this.newUser.name = ''
-        this.newUser.username = ''
-        this.newUser.user_type_id = 2
-        this.errorMessage = ''
-      } catch (error) {
-        console.error('Error creating user:', error)
-        this.errorMessage = 'Error creating user: ' + error.response.data.message;
-      }
+const createBtnLoading = ref(false)
+const newUser = ref({
+  name: '',
+  username: '',
+  user_type_id: 2, // default: user
+})
+const isEditing = ref(false)
+const currentUser = ref({})
+const errorMessage = ref('')
+const updateErrorMessage = ref('')
 
-      this.createBtnLoading = false
-    },
-    async editUser(user) {
-      this.currentUser = { ...user }
-      this.isEditing = true
-    },
-    async updateUser() {
-      try {
-        const response = await axios.put(`/api/users/${this.currentUser.id}`, {
-          name: this.currentUser.name,
-          username: this.currentUser.username,
-          password: this.currentUser.password,
-          user_type_id: this.currentUser.user_type_id // Include user_type_id in the request
-        });
+const _storeUser = async () => {
+  createBtnLoading.value = true
 
-        // Assuming the backend returns the updated user with the full user type
-        const updatedUser = response.data;
+  const { succResponse, errResponse } = await storeUser(newUser.value)
+  if (succResponse) {
+    // Reset newUser
+    newUser.value.name = ''
+    newUser.value.username = ''
+    newUser.value.user_type_id = 2
+    errorMessage.value = ''
+  }
 
-        // Find the index of the user and update the user and their type
-        const index = this.users.findIndex(user => user.id === this.currentUser.id);
-        if (index !== -1) {
-          this.users.splice(index, 1, updatedUser); // Replace the user with the updated one
-        }
+  // error response
+  if (errResponse) errorMessage.value = errResponse
 
-        this.isEditing = false; // Close the edit modal
-        this.updateErrorMessage = ''; // Clear error messages if successful
-      } catch (error) {
-        // Handle the error and display a message
-        console.error('Error updating user:', error);
-        if (error.response && error.response.data && error.response.data.message) {
-          this.updateErrorMessage = 'Error updating user: ' + error.response.data.message;
-        } else {
-          this.updateErrorMessage = 'An unknown error occurred.';
-        }
-      }
-    },
-    async deleteUser(userId) {
-      if (confirm('Are you sure you want to delete this user?')) {
-        try {
-          await axios.delete(`/api/users/${userId}`)
-          this.users = this.users.filter(user => user.id !== userId)
-        } catch (error) {
-          console.error('Error deleting user:', error)
-        }
-      }
-    },
-  },
+  // reset
+  createBtnLoading.value = false
 }
+
+const editUser = (user) => {
+  currentUser.value = { ...user }
+  isEditing.value = true
+}
+
+const _updateUser = async () => {
+  const { succResponse, errResponse } = await updateUser(currentUser.value)
+  if (succResponse) {
+    isEditing.value = false
+    updateErrorMessage.value = ''
+  }
+
+  // error response
+  if (errResponse) updateErrorMessage.value = errResponse
+}
+
+onMounted(async () => {
+  await fetchUsers()
+  await fetchUserTypes()
+})
 </script>
 
 <style scoped>

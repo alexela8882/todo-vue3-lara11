@@ -37,8 +37,12 @@
         </header>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="bg-white shadow rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-700">Users</h3>
+            <p class="text-2xl font-bold text-blue-600">{{ getUsers.length }}</p> <!-- Example value -->
+          </div>
           <div v-for="(group, status) in getAllTodos" :key="status" class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-700">{{ status }}</h3>
+            <h3 class="text-lg font-semibold text-gray-700">Todo ({{ status }})</h3>
             <p class="text-2xl font-bold text-blue-600">{{ group.count }}</p> <!-- Example value -->
           </div>
         </div>
@@ -60,6 +64,11 @@ import { useTodoStore } from '@/stores/todos'
 const todoStore = useTodoStore()
 const { getAllTodos } = storeToRefs(todoStore)
 const { fetchAllTodos } = todoStore
+
+import { useUserStore } from '@/stores/users'
+const userStore = useUserStore()
+const { getUsers } = storeToRefs(userStore)
+const { fetchUsers } = userStore
 
 const route = useRoute()
 
