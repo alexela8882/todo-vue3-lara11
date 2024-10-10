@@ -19,8 +19,16 @@
         <ul
           tabindex="0"
           class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-          <li><a>Admin</a></li>
-          <li><a>Item 3</a></li>
+          <li>
+            <router-link to="/todos">Todos</router-link>
+          </li>
+          <li>
+            <router-link
+              v-if="loggedUser && loggedUser.user_type_id === 1"
+              to="/admin">
+              Admin
+            </router-link>
+          </li>
         </ul>
       </div>
       <a @click="this.$router.push('/')" class="btn btn-ghost text-xl">TODO</a>

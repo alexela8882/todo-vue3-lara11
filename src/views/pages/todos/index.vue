@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto w-5/12 p-4">
+  <div class="container mx-auto w-full md:w-9/12 lg:w-6/12 p-4">
     <h1 class="text-2xl font-bold mb-4">Todos</h1>
 
     <div class="mb-4 flex w-full gap-2">

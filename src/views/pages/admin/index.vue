@@ -35,22 +35,11 @@
           <h1 class="text-2xl font-bold text-gray-800">Welcome to the Admin Dashboard</h1>
           <p class="text-gray-600">Here you can manage users and their details.</p>
         </header>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
-            <p class="text-2xl font-bold text-blue-600">150</p> <!-- Example value -->
-          </div>
-          <div class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-700">Active Users</h3>
-            <p class="text-2xl font-bold text-blue-600">120</p> <!-- Example value -->
-          </div>
-          <div class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-700">Inactive Users</h3>
-            <p class="text-2xl font-bold text-blue-600">30</p> <!-- Example value -->
-          </div>
-          <div class="bg-white shadow rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-700">Pending Approvals</h3>
-            <p class="text-2xl font-bold text-blue-600">5</p> <!-- Example value -->
+          <div v-for="(group, status) in allTodos" :key="status" class="bg-white shadow rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-700">{{ status }}</h3>
+            <p class="text-2xl font-bold text-blue-600">{{ group.count }}</p> <!-- Example value -->
           </div>
         </div>
       </div>
@@ -62,12 +51,39 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import axios from '@/axios'
+
 const route = useRoute()
+const allTodos = ref({})
 
 const isActive = (routeName) => {
   return route.name === routeName
 }
+
+const fetchUsers = async () => {
+  try {
+    const response = await axios.get('/api/todos-all')
+    allTodos.value = response.data
+  } catch (error) {
+    console.error('Error fetching all todos:', error)
+  }
+}
+
+const fetchAllTodos = async () => {
+  try {
+    const response = await axios.get('/api/todos-all')
+    allTodos.value = response.data
+  } catch (error) {
+    console.error('Error fetching all todos:', error)
+  }
+}
+
+onMounted(async () => {
+  await fetchAllTodos()
+  await fetchUsers()
+})
 </script>
 
 <style scoped>
