@@ -31,7 +31,7 @@
           </li>
         </ul>
       </div>
-      <a @click="this.$router.push('/')" class="btn btn-ghost text-xl">TODO</a>
+      <a @click="$router.push('/')" class="btn btn-ghost text-xl">TODO</a>
     </div>
     <div class="navbar-center hidden lg:flex">
       <ul class="menu menu-horizontal px-1">
