@@ -54,10 +54,10 @@
           <div v-else>
             <button
               @click="_updateTodo"
-              class="absolute top-2 right-2 text-gray-400 btn btn-circle btn-xs btn-link">
+              class="absolute top-2 right-2 text-green-600 btn btn-circle btn-xs btn-link">
               <!-- Pencil Icon (Heroicons example) -->
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </button>
           </div>
