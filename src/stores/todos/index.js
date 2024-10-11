@@ -16,7 +16,29 @@ export const useTodoStore = defineStore('todo', () => {
   const getAllTodos = computed(() => allTodos.value)
   const getTodoStatuses = computed(() => todoStatuses.value)
 
+  const toggledStatuses = computed(() => {
+    // Get the ids of the statuses where toggle is true
+    return getTodoStatuses.value.filter(status => status.toggle).map(status => status.id)
+  })
+  
+  const filteredTodos = computed(() => {
+    // Filter todos based on whether their status id is in the toggled statuses
+    return getTodos.value.filter(todo => toggledStatuses.value.includes(todo.todo_status_id))
+  })
+
   // actions
+  const toggleStatus = (status) => {
+    todoStatuses.value = todoStatuses.value.map(s => {
+      if (s.id === status.id) {
+        return {
+          ...s,
+          toggle: !s.toggle // Toggle the status
+        }
+      }
+      return s
+    })
+  }
+
   const fetchTodos = async () => {
     try {
       const response = await axios.get('/api/todos')
@@ -29,7 +51,10 @@ export const useTodoStore = defineStore('todo', () => {
   const fetchTodoStatuses = async () => {
     try {
       const response = await axios.get('/api/todostatuses')
-      todoStatuses.value = response.data
+      todoStatuses.value = response.data.map(data => ({
+        ...data,
+        toggle: true
+      }))
     } catch (error) {
       console.error('Error fetching todo statuses:', error)
     }
@@ -100,11 +125,14 @@ export const useTodoStore = defineStore('todo', () => {
 
   return {
     getTodos,
+    filteredTodos,
     getAllTodos,
     getTodoStatuses,
+    toggledStatuses,
     fetchTodos,
     fetchAllTodos,
     fetchTodoStatuses,
+    toggleStatus,
     storeTodo,
     updateTodo,
     deleteTodo

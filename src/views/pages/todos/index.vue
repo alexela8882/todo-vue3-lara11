@@ -24,9 +24,9 @@
 
     <!-- Legends -->
     <div class="flex gap-1 mb-4">
-      <div v-for="(status, sx) in todoStatuses" :key="sx">
+      <div v-for="(status, sx) in getTodoStatuses" :key="sx">
         <button
-          @click="status.toggle = !status.toggle"
+          @click="toggleStatus(status)"
           class="btn"
           :class="`${statusClass('border', status.id)} border-${status.toggle ? '1' : '0'}`">
           {{ status.name }}
@@ -42,7 +42,7 @@
     </div>
     <div v-else>
       <div
-        v-if="filteredTodos && filteredTodos.length > 0"
+        v-if="getTodos && getTodos.length > 0"
         v-for="todo in filteredTodos"
         :key="todo.id">
         <div
@@ -133,11 +133,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import axios from '@/axios'
 
-const todoStatuses = ref([])
 const newTodo = ref('')
 const isEditing = ref(false)
 const currentTodo = ref()
@@ -146,10 +145,16 @@ const preventiveModal = ref(false)
 // stores
 import { useTodoStore } from '@/stores/todos'
 const todoStore = useTodoStore()
-const { getTodos, getTodoStatuses } = storeToRefs(todoStore)
+const {
+  getTodos,
+  filteredTodos,
+  getTodoStatuses,
+  toggledStatuses
+} = storeToRefs(todoStore)
 const {
   fetchTodos,
   fetchTodoStatuses,
+  toggleStatus,
   storeTodo,
   updateTodo,
   deleteTodo
@@ -172,16 +177,6 @@ const statusClass = (prefix, statusId) => {
       return `${prefix}-gray-500` // Unknown status
   }
 }
-
-const toggledStatuses = computed(() => {
-  // Get the ids of the statuses where toggle is true
-  return todoStatuses.value.filter(status => status.toggle).map(status => status.id)
-})
-
-const filteredTodos = computed(() => {
-  // Filter todos based on whether their status id is in the toggled statuses
-  return getTodos.value.filter(todo => toggledStatuses.value.includes(todo.todo_status_id))
-})
 
 // Create a new todo
 const _storeTodo = async () => {
@@ -218,14 +213,8 @@ const _deleteTodo = async (id) => {
 
 // Fetch todos on component mount
 onMounted(async () => {
-  await fetchTodos()
-  await fetchTodoStatuses()
-
-  // assign
-  todoStatuses.value = getTodoStatuses.value.map(status => ({
-    ...status,
-    toggle: true // toggle all
-  }))
+  if (getTodos.value.length <= 0) await fetchTodos()
+  if (getTodoStatuses.value.length <= 0)  await fetchTodoStatuses()
 })
 </script>
 
