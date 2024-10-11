@@ -90,18 +90,21 @@
         
         <!-- User Inputs -->
         <input
+          @keypress.enter="_updateUser"
           v-model="currentUser.name"
           type="text"
           placeholder="User Name"
           class="input input-bordered w-full mb-4"
         />
         <input
+          @keypress.enter="_updateUser"
           v-model="currentUser.username"
           type="text"
           placeholder="Username"
           class="input input-bordered w-full mb-4"
         />
         <input
+          @keypress.enter="_updateUser"
           v-model="currentUser.password"
           type="password"
           placeholder="Password"
@@ -125,7 +128,11 @@
         
         <!-- Modal Actions -->
         <div class="modal-action">
-          <button @click="_updateUser" class="btn btn-success">Update User</button>
+          <button
+            @click="_updateUser"
+            class="text-white btn btn-success"
+            :disabled="updateLoading"
+          >{{ updateLoading ? 'Updating...' : 'Update User' }}</button>
           <label for="edit_user_modal" class="btn">Cancel</label>
         </div>
       </div>
@@ -161,6 +168,7 @@ const isEditing = ref(false)
 const currentUser = ref({})
 const errorMessage = ref('')
 const updateErrorMessage = ref('')
+const updateLoading = ref(false)
 
 const _storeUser = async () => {
   createBtnLoading.value = true
@@ -187,6 +195,8 @@ const editUser = (user) => {
 }
 
 const _updateUser = async () => {
+  updateLoading.value = true
+
   const { succResponse, errResponse } = await updateUser(currentUser.value)
   if (succResponse) {
     isEditing.value = false
@@ -195,6 +205,8 @@ const _updateUser = async () => {
 
   // error response
   if (errResponse) updateErrorMessage.value = errResponse
+
+  updateLoading.value = false
 }
 
 onMounted(async () => {

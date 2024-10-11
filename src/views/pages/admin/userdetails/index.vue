@@ -41,6 +41,7 @@
 
         <!-- First Name Input -->
         <input
+          @keypress.enter="_updateUserDetail"
           v-model="currentUserDetail.first_name"
           type="text"
           placeholder="First Name"
@@ -49,6 +50,7 @@
         
         <!-- Last Name Input -->
         <input
+          @keypress.enter="_updateUserDetail"
           v-model="currentUserDetail.last_name"
           type="text"
           placeholder="Last Name"
@@ -57,6 +59,7 @@
 
         <!-- Email Input -->
         <input
+          @keypress.enter="_updateUserDetail"
           v-model="currentUserDetail.email"
           type="email"
           placeholder="Email"
@@ -70,7 +73,11 @@
 
         <!-- Modal Actions -->
         <div class="modal-action">
-          <button @click="_updateUserDetail" class="btn btn-success">Update User Detail</button>
+          <button
+            @click="_updateUserDetail"
+            class="text-white btn btn-success"
+            :disabled="updateLoading"
+          >{{ updateLoading ? 'Updating...' : 'Update User Detail' }}</button>
           <label for="edit_user_detail_modal" class="btn">Cancel</label>
         </div>
       </div>
@@ -96,6 +103,7 @@ const userDetails = ref([])
 const currentUserDetail = ref(null)
 const isEditing = ref(false)
 const updateErrorMessage = ref('')
+const updateLoading = ref(false)
 
 const editUserDetail = (detail) => {
   currentUserDetail.value = { ...detail }
@@ -103,6 +111,8 @@ const editUserDetail = (detail) => {
 }
 
 const _updateUserDetail = async () => {
+  updateLoading.value = true
+
   const { succResponse, errResponse } = await updateUserDetail(currentUserDetail.value)
 
   if (succResponse) {
@@ -111,6 +121,8 @@ const _updateUserDetail = async () => {
   }
 
   if (errResponse) updateErrorMessage.value = errResponse
+
+  updateLoading.value = false
 }
 
 const deleteUserDetail = async (id) => {
